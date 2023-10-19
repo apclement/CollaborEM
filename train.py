@@ -28,7 +28,7 @@ def parse_args(args=None):
     parser.add_argument('--save_model', action='store_true')
 
     parser.add_argument('--scheduler', default=False)
-    parser.add_argument('--fp16', default=False)
+    parser.add_argument('--fp16', default=True)
 
     parser.add_argument('--lr', type=float, default=2e-5)
     parser.add_argument('--n_epoch', type=int, default=40)
@@ -82,19 +82,19 @@ def train(model, train_set, optimizer, scheduler=None, fp16=True):
 
         # forward
         optimizer.zero_grad()
-        #with torch.autocast(device_type='cuda', dtype=torch.float16):
-        logits, _, eA, eB = model(x, sample, sentencesA, sentencesB)
-
-        logits = logits.view(-1, logits.size(-1))
-        y = y.view(-1)
-
-        bce_loss = criterion(logits, y)
-
-        y_ = 2 * y
-        y_ -= 1
-        dist_loss = dist_criterion(eA, eB, y_)
-
-        loss = bce_loss + 0.2 * dist_loss
+        with torch.autocast(device_type='cuda', dtype=torch.float16):
+            logits, _, eA, eB = model(x, sample, sentencesA, sentencesB)
+    
+            logits = logits.view(-1, logits.size(-1))
+            y = y.view(-1)
+    
+            bce_loss = criterion(logits, y)
+    
+            y_ = 2 * y
+            y_ -= 1
+            dist_loss = dist_criterion(eA, eB, y_)
+    
+            loss = bce_loss + 0.2 * dist_loss
 
         # back propagation
         if fp16:
