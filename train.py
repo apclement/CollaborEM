@@ -12,6 +12,9 @@ from dataloader import TrainDataset, TestDataset
 from model import LMNet
 from utils import *
 
+# Creates a GradScaler once at the beginning of training.
+scaler = amp.GradScaler()
+
 
 def parse_args(args=None):
     parser = argparse.ArgumentParser(
@@ -79,28 +82,38 @@ def train(model, train_set, optimizer, scheduler=None, fp16=True):
 
         # forward
         optimizer.zero_grad()
-        logits, _, eA, eB = model(x, sample, sentencesA, sentencesB)
-
-        logits = logits.view(-1, logits.size(-1))
-        y = y.view(-1)
-
-        bce_loss = criterion(logits, y)
-
-        y_ = 2 * y
-        y_ -= 1
-        dist_loss = dist_criterion(eA, eB, y_)
-
-        loss = bce_loss + 0.2 * dist_loss
+        with autocast(device_type='cuda', dtype=torch.float16):
+            logits, _, eA, eB = model(x, sample, sentencesA, sentencesB)
+    
+            logits = logits.view(-1, logits.size(-1))
+            y = y.view(-1)
+    
+            bce_loss = criterion(logits, y)
+    
+            y_ = 2 * y
+            y_ -= 1
+            dist_loss = dist_criterion(eA, eB, y_)
+    
+            loss = bce_loss + 0.2 * dist_loss
 
         # back propagation
         if fp16:
-            with amp.scale_loss(loss, optimizer) as scaled_loss:
-                scaled_loss.backward()
+            scaler.scale(loss).backward()
+            #with amp.scale_loss(loss, optimizer) as scaled_loss:
+            #    scaled_loss.backward()
         else:
             loss.backward()
-        optimizer.step()
+            
+        #optimizer.step()
+        scaler.step(optimizer)
+
+        # Updates the scale for next iteration.
+        scaler.update()
+        
         if scheduler:
             scheduler.step()
+
+        
 
 
 def eval_model(model, dataset):
@@ -183,8 +196,9 @@ if __name__ == '__main__':
     )
     model = model.cuda()
     optimizer = AdamW(model.parameters(), lr=args.lr)
-    if args.fp16:
-        model, optimizer = amp.initialize(model, optimizer, opt_level='O2')
+    
+    #if args.fp16:
+        #model, optimizer = amp.initialize(model, optimizer, opt_level='O2')
 
     logging.info(model)
 
