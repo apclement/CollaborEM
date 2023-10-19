@@ -24,6 +24,8 @@ data_list = ['Structured/Amazon-Google',
              'Dirty/iTunes-Amazon',
              'Textual/Abt-Buy']
 
+data_list = ['Structured/Amazon-Google',]
+
 for data in data_list:
     configs = json.load(open('configs.json'))
     configs = {conf['name']: conf for conf in configs}
