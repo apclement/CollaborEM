@@ -82,7 +82,7 @@ def train(model, train_set, optimizer, scheduler=None, fp16=True):
 
         # forward
         optimizer.zero_grad()
-        with autocast(device_type='cuda', dtype=torch.float16):
+        with torch.autocast(device_type='cuda', dtype=torch.float16):
             logits, _, eA, eB = model(x, sample, sentencesA, sentencesB)
     
             logits = logits.view(-1, logits.size(-1))
