@@ -7,7 +7,7 @@ import torch.nn as nn
 from datetime import datetime
 from torch.utils.data import DataLoader
 from transformers import AdamW
-from torch import amp
+from torch.cuda import amp
 from dataloader import TrainDataset, TestDataset
 from model import LMNet
 from utils import *
