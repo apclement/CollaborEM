@@ -82,19 +82,19 @@ def train(model, train_set, optimizer, scheduler=None, fp16=True):
 
         # forward
         optimizer.zero_grad()
-        with torch.autocast(device_type='cuda', dtype=torch.float16):
-            logits, _, eA, eB = model(x, sample, sentencesA, sentencesB)
-    
-            logits = logits.view(-1, logits.size(-1))
-            y = y.view(-1)
-    
-            bce_loss = criterion(logits, y)
-    
-            y_ = 2 * y
-            y_ -= 1
-            dist_loss = dist_criterion(eA, eB, y_)
-    
-            loss = bce_loss + 0.2 * dist_loss
+        #with torch.autocast(device_type='cuda', dtype=torch.float16):
+        logits, _, eA, eB = model(x, sample, sentencesA, sentencesB)
+
+        logits = logits.view(-1, logits.size(-1))
+        y = y.view(-1)
+
+        bce_loss = criterion(logits, y)
+
+        y_ = 2 * y
+        y_ -= 1
+        dist_loss = dist_criterion(eA, eB, y_)
+
+        loss = bce_loss + 0.2 * dist_loss
 
         # back propagation
         if fp16:
