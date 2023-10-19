@@ -28,7 +28,7 @@ def parse_args(args=None):
     parser.add_argument('--save_model', action='store_true')
 
     parser.add_argument('--scheduler', default=False)
-    parser.add_argument('--fp16', default=True)
+    parser.add_argument('--fp16', default=False)
 
     parser.add_argument('--lr', type=float, default=2e-5)
     parser.add_argument('--n_epoch', type=int, default=40)
