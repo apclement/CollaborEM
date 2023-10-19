@@ -8,7 +8,7 @@ from transformers import BertModel, AlbertModel, DistilBertModel, RobertaModel, 
 model_ckpts = {'bert': "bert-base-uncased",
                'albert': "albert-base-v2",
                'roberta': "roberta-base",
-               'xlnet': "xlnet-base-cased",
+               'xlnet': "./lm_model/xlnet-base-cased",
                'distilbert': "distilbert-base-uncased"}
 
 
