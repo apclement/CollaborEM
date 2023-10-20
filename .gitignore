@@ -1,0 +1,8 @@
+data/
+er/
+*.pyc
+.ipynb_checkpoints
+lm_model/
+log/
+*.zip
+*.gz
