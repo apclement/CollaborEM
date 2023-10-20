@@ -6,14 +6,16 @@ import torch
 import torch.nn as nn
 from datetime import datetime
 from torch.utils.data import DataLoader
-from torch.optim import AdamW
-from torch.cuda import amp
+#from torch.optim import AdamW
+from transformers import AdamW
+from apex import amp
+#from torch.cuda import amp
 from dataloader import TrainDataset, TestDataset
 from model import LMNet
 from utils import *
 
 # Creates a GradScaler once at the beginning of training.
-scaler = amp.GradScaler()
+#scaler = amp.GradScaler()
 
 
 def parse_args(args=None):
@@ -72,6 +74,8 @@ def train(model, train_set, optimizer, scheduler=None, fp16=True):
     criterion = nn.CrossEntropyLoss()
     dist_criterion = nn.CosineEmbeddingLoss(margin=0.5)
     model.train()
+    epoch_loss = 0.0
+    
     for batch in iterator:
         x, y, seqlen, sample, sentencesA, sentencesB = batch
         y = torch.tensor(y).cuda()
@@ -82,36 +86,40 @@ def train(model, train_set, optimizer, scheduler=None, fp16=True):
 
         # forward
         optimizer.zero_grad()
-        with torch.autocast(device_type='cuda', dtype=torch.float16):
-            logits, _, eA, eB = model(x, sample, sentencesA, sentencesB)
-    
-            logits = logits.view(-1, logits.size(-1))
-            y = y.view(-1)
-    
-            bce_loss = criterion(logits, y)
-    
-            y_ = 2 * y
-            y_ -= 1
-            dist_loss = dist_criterion(eA, eB, y_)
-    
-            loss = bce_loss + 0.2 * dist_loss
+        #with torch.autocast(device_type='cuda', dtype=torch.float16):
+        logits, _, eA, eB = model(x, sample, sentencesA, sentencesB)
+
+        logits = logits.view(-1, logits.size(-1))
+        y = y.view(-1)
+
+        bce_loss = criterion(logits, y)
+
+        y_ = 2 * y
+        y_ -= 1
+        dist_loss = dist_criterion(eA, eB, y_)
+
+        loss = bce_loss + 0.2 * dist_loss
 
         # back propagation
         if fp16:
-            scaler.scale(loss).backward()
-            #with amp.scale_loss(loss, optimizer) as scaled_loss:
-            #    scaled_loss.backward()
+            #scaler.scale(loss).backward()
+            with amp.scale_loss(loss, optimizer) as scaled_loss:
+                scaled_loss.backward()
         else:
             loss.backward()
             
-        #optimizer.step()
-        scaler.step(optimizer)
+        optimizer.step()
+        #scaler.step(optimizer)
 
         # Updates the scale for next iteration.
-        scaler.update()
+        #scaler.update()
         
         if scheduler:
             scheduler.step()
+            
+        epoch_loss += loss.cpu().detach().numpy().tolist()
+        
+    return epoch_loss
 
         
 
@@ -127,7 +135,7 @@ def eval_model(model, dataset):
         x, y, seqlens, sample = batch
         x = torch.tensor(x).squeeze().cuda()
         sample = torch.LongTensor(sample).squeeze()
-        with torch.no_grad():
+        with torch.no_grad():            
             logits, _ = model(x, sample)
             for item in y:
                 y_truth.append(item[0])
@@ -197,8 +205,8 @@ if __name__ == '__main__':
     model = model.cuda()
     optimizer = AdamW(model.parameters(), lr=args.lr)
     
-    #if args.fp16:
-        #model, optimizer = amp.initialize(model, optimizer, opt_level='O2')
+    if args.fp16:
+        model, optimizer = amp.initialize(model, optimizer, opt_level='O2')
 
     logging.info(model)
 
@@ -209,10 +217,13 @@ if __name__ == '__main__':
         logging.info('epoch: {}'.format(epoch))
 
         torch.cuda.empty_cache()
-        train(model,
+
+        loss = train(model,
               train_set,
               optimizer,
               scheduler=None)
+        
+        logging.info(f"Train loss = {round(loss, 2)}")
 
         torch.cuda.empty_cache()
 
