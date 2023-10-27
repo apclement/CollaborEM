@@ -212,7 +212,7 @@ if __name__ == '__main__':
 
     test_precision, test_recall, test_F1 = 0.0, 0.0, 0.0
     all_precision, all_recall, all_F1 = 0.0, 0.0, 0.0
-
+    
     for epoch in range(1, n_epoch + 1):
         logging.info('epoch: {}'.format(epoch))
 
@@ -226,10 +226,11 @@ if __name__ == '__main__':
         logging.info(f"Train loss = {round(loss, 2)}")
 
         torch.cuda.empty_cache()
-
+               
         test_precision, test_recall, test_F1 = eval_model(model, test_set)
         logging.info(
             '[Test]  precision: {:.4f}  recall: {:.4f}  F1: {:.4f}'.format(test_precision, test_recall, test_F1))
+        
         all_precision, all_recall, all_F1 = eval_model(model, all_set)
         logging.info(
             '[All]  precision: {:.4f}  recall: {:.4f}  F1: {:.4f}'.format(all_precision, all_recall, all_F1))

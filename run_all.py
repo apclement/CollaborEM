@@ -31,8 +31,8 @@ for data in data_list:
     configs = {conf['name']: conf for conf in configs}
     config = configs[data]
 
-    cmd = """python train.py \
-    --data_name %s --n_epoch %d --seed %d""" % (data, config['epoch'], seed)
+    cmd = """python train.py --data_name %s --n_epoch %d --seed %d""" % (data, config['epoch'], seed)
+    
     if config['literal_channel']:
         cmd += ' --literal'
     if config['digital_channel']:

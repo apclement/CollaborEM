@@ -321,6 +321,7 @@ class AttConf(object):
         print_time_info('Finished preprocesssing adjacent matrix')
 
     def train(self, device):
+        print("training...")
         self.loaded_data.negative_sample()
         # Compose Graph NN
         gnn_channel = GNNChannel(self.sr_ent_num, self.tg_ent_num, self.dim, self.layer_num, self.drop_out,
@@ -335,6 +336,7 @@ class AttConf(object):
         criterion = AlignLoss(self.margin_gamma)
 
         for epoch_num in range(1, self.epoch_num + 1):
+            print("Epoch", epoch_num)
             gnn_channel.train()
             optimizer.zero_grad()
             sr_seed_hid, tg_seed_hid, _, _ = gnn_channel.forward(self.loaded_data.train_sr_ent_seeds,

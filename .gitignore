@@ -6,3 +6,4 @@ lm_model/
 log/
 *.zip
 *.gz
+checkpoints/

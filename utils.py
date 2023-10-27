@@ -103,5 +103,5 @@ def get_tokenizer(lm='bert'):
         tokenizer = RobertaTokenizer.from_pretrained('./lm_model/roberta-base')
     elif lm == 'xlnet':
         from transformers import XLNetTokenizer
-        tokenizer = XLNetTokenizer.from_pretrained('./lm_model/xlnet-base-cased')
+        tokenizer = XLNetTokenizer.from_pretrained('xlnet-base-cased')
     return tokenizer
