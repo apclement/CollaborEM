@@ -8,7 +8,7 @@ def parse_args(args=None):
         description='Table to KG.',
         usage='table2kg_attr.py [<args>] [-h | --help]'
     )
-    parser.add_argument('--data_name', type=str, default='Structured/Fodors-Zagats')
+    parser.add_argument('--data_name', type=str, default='Structured/testA-testB')
 
     args = parser.parse_args(args)
 
@@ -20,6 +20,12 @@ if __name__ == '__main__':
 
     configs = json.load(open('configs.json'))
     configs = {conf['name']: conf for conf in configs}
+    
+    if args.data_name not in configs:
+        configs[args.data_name] = {
+            'name': args.data_name,
+            'path': './data/ER-Magellan/'+ args.data_name
+        }   
     config = configs[args.data_name]
 
     data_name = args.data_name
